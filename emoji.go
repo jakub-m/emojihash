@@ -1,40 +1,53 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 const nl = "\n"
 
-type EmojiManager map[string]map[string]Emoji
-
 type Emoji struct {
+	Character   string
+	Group       string
+	SubGroup    string
+	Description string
 }
 
-func NewEmojiManager(s string) EmojiManager {
-	em := EmojiManager(make(map[string]map[string]Emoji))
+func (e Emoji) String() string {
+	return fmt.Sprintf("%s\t%s\t%s\t%s", e.Group, e.SubGroup, e.Character, e.Description)
+}
+
+func LoadEmojiFromFile(s string) []Emoji {
+	emoji := []Emoji{}
 	currentGroup := ""
 	currentSubGroup := ""
 	for it := (emojiParser{data: s}); !it.end(); it.scan() {
-		if g, ok := getGroup(it.line); ok {
+		if it.line == "" {
+			continue
+		} else if g, ok := getGroup(it.line); ok {
 			currentGroup = g
-			em[currentGroup] = make(map[string]Emoji)
-		}
-		if sg, ok := getSubGroup(it.line); ok {
+		} else if sg, ok := getSubGroup(it.line); ok {
 			if currentGroup == "" {
 				panic("group missing")
 			}
 			currentSubGroup = sg
-		}
-		if e, ok := getEmojiWithMeta(it.line); ok {
+		} else if e, ok := getEmojiWithMeta(it.line); ok {
 			if currentGroup == "" || currentSubGroup == "" {
 				panic("group or subgroup missing")
 			}
-			em[currentGroup][currentSubGroup] = e
+			e.Group = currentGroup
+			e.SubGroup = currentSubGroup
+			// TODO filterig here
+			emoji = append(emoji, e)
+		} else {
+			log.Printf("Failed to handle: %s", strconv.Quote(it.line))
 		}
 	}
-	return em
+	return emoji
 }
 
 type emojiParser struct {
@@ -88,9 +101,39 @@ func getSubGroup(line string) (string, bool) {
 	return normalizeGroupName(groupName), true
 }
 
+var regexEmoji = regexp.MustCompile(`(\w+(?:\s\w+)*)\s+;.*?#.*?E\d+(?:\.\d+)\s+(.*)`)
+
 func getEmojiWithMeta(line string) (Emoji, bool) {
 	var zero Emoji
-	return zero, false
+	if strings.HasPrefix(line, "#") {
+		return zero, false
+	}
+	matches := regexEmoji.FindStringSubmatch(line)
+	if len(matches) == 0 {
+		return zero, false
+	}
+	c, err := decodeCharacterFromEncodedRunes(matches[1])
+	if err != nil {
+		log.Printf("Failed to decode rune for line: %s", strconv.Quote(line))
+		return zero, false
+	}
+	description := matches[2]
+	return Emoji{
+		Character:   c,
+		Description: description,
+	}, true
+}
+
+func decodeCharacterFromEncodedRunes(s string) (string, error) {
+	c := ""
+	for _, p := range strings.Split(s, " ") {
+		i, err := strconv.ParseInt(p, 16, 64)
+		if err != nil {
+			return "", fmt.Errorf("cannot parse %s: %s", strconv.Quote(p), err)
+		}
+		c += string(rune(i))
+	}
+	return c, nil
 }
 
 func normalizeGroupName(s string) string {
