@@ -11,11 +11,14 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 func main() {
 	if err := mainerr(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
 
@@ -26,11 +29,15 @@ func mainerr() error {
 	} else {
 		log.SetOutput(io.Discard)
 	}
+	groupFilter := parseGroupFilter(opts.groupFilterString)
 	emojis := loader.LoadEmojiFromFile(
 		data.EmojiFile,
-		filter.IgnoreRunesContaining(
-			filter.ZeroWidthJoiner,
-			filter.SkinTones,
+		filter.All(
+			groupFilter,
+			filter.IgnoreRunesContaining(
+				filter.ZeroWidthJoiner,
+				filter.SkinTones,
+			),
 		),
 	)
 	if opts.listGroups {
@@ -64,20 +71,22 @@ func mainerr() error {
 }
 
 type options struct {
-	listGroups bool
-	listEmojis bool
-	debug      bool
-	seed       string
+	listGroups        bool
+	listEmojis        bool
+	debug             bool
+	seed              string
+	groupFilterString string
 }
 
 func parseOptions() options {
 	var o options
+	flag.BoolVar(&o.listGroups, "lg", false, "")
 	flag.BoolVar(&o.listGroups, "list-groups", false, "List groups of emojis. Those groups can be later used to configure which groups are used")
 	flag.BoolVar(&o.listEmojis, "l", false, "")
 	flag.BoolVar(&o.listEmojis, "list", false, "list emojis")
 	flag.BoolVar(&o.debug, "d", false, "Debug mode")
-	flag.StringVar(&o.seed, "s", "", "")
-	flag.StringVar(&o.seed, "seed", "", "Additional seed. This string is concatenated to every input string before hashing.")
+	flag.StringVar(&o.seed, "s", "", "Additional seed. This string is concatenated to every input string before hashing.")
+	flag.StringVar(&o.groupFilterString, "g", "", `Filter groups. The syntax is: "alphanum,~flags". "~" means that the group or subgroup should not be included. The order does not matter.`)
 	flag.Parse()
 	return o
 }
@@ -86,4 +95,34 @@ func hash(s string) uint32 {
 	h := fnv.New32a()
 	h.Write([]byte(s))
 	return h.Sum32()
+}
+
+const excludeMark = "~"
+
+func parseGroupFilter(s string) filter.EmojiFilter {
+	includeGroups := []string{}
+	excludeGroups := []string{}
+	for _, f := range strings.Split(s, ",") {
+		f = strings.TrimSpace(f)
+		if f == "" {
+			continue
+		}
+		log.Printf("Group filter: %s", strconv.Quote(f))
+		if strings.HasPrefix(f, excludeMark) {
+			excludeGroups = append(excludeGroups, f[len(excludeMark):])
+		} else {
+			includeGroups = append(includeGroups, f)
+		}
+	}
+	includeFilter := filter.UseAll
+	if len(includeGroups) > 0 {
+		log.Printf("Include groups: %s", includeGroups)
+		includeFilter = filter.IncludeGroups(includeGroups)
+	}
+	excludeFilter := filter.UseAll
+	if len(excludeGroups) > 0 {
+		log.Printf("Exclude groups: %s", excludeGroups)
+		excludeFilter = filter.Not(filter.IncludeGroups(excludeGroups))
+	}
+	return filter.All(includeFilter, excludeFilter)
 }

@@ -10,13 +10,25 @@ func UseAll(e emoji.Emoji) bool {
 	return true
 }
 
-func All(e emoji.Emoji, filters ...EmojiFilter) bool {
-	for _, filter := range filters {
-		if !filter(e) {
-			return false
-		}
+func UseNone(e emoji.Emoji) bool {
+	return false
+}
+
+func Not(f EmojiFilter) EmojiFilter {
+	return func(e emoji.Emoji) bool {
+		return !f(e)
 	}
-	return true
+}
+
+func All(filters ...EmojiFilter) EmojiFilter {
+	return func(e emoji.Emoji) bool {
+		for _, filter := range filters {
+			if !filter(e) {
+				return false
+			}
+		}
+		return true
+	}
 }
 
 // https://symbl.cc/en/unicode/blocks/miscellaneous-symbols-and-pictographs/#subblock-1F3FB
@@ -44,5 +56,16 @@ func IgnoreRunesContaining(runesToIgnore ...[]rune) EmojiFilter {
 			}
 		}
 		return true
+	}
+}
+
+func IncludeGroups(groups []string) EmojiFilter {
+	return func(e emoji.Emoji) bool {
+		for _, g := range groups {
+			if e.Group == g || e.SubGroup == g {
+				return true
+			}
+		}
+		return false
 	}
 }
