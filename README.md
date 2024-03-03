@@ -8,6 +8,21 @@ PWD-based emoji, changed daily:
 🌷
 ```
 
+To plant this to zsh use:
+
+```zsh
+function __prompt_emoji {
+	echo "$PWD" | ~/Private/Coding/emojihash/bin/emojihash -s $(date +%Y%m%d)
+}
+
+function __prompt_dir {
+	basename "$PWD"
+}
+
+setopt PROMPT_SUBST
+PS1='$(__prompt_emoji) $(__prompt_dir) %'
+```
+
 File [emoji-test.txt](emoji-test.txt) downloaded from [unicode.org][ref_unicode].
 
 [ref_unicode]:https://unicode.org/Public/emoji/15.1/emoji-test.txt
