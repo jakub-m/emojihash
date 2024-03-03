@@ -23,7 +23,7 @@ func mainerr() error {
 	} else {
 		log.SetOutput(io.Discard)
 	}
-	emojis := LoadEmojiFromFile(emojiFile)
+	emojis := LoadEmojiFromFile(emojiFile, UseAll)
 	if opts.listGroups {
 		printedGroups := make(map[string]bool)
 		for _, e := range emojis {

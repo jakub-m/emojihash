@@ -21,8 +21,10 @@ func (e Emoji) String() string {
 	return fmt.Sprintf("%s\t%s\t%s\t%s", e.Group, e.SubGroup, e.Character, e.Description)
 }
 
-func LoadEmojiFromFile(s string) []Emoji {
-	emoji := []Emoji{}
+type EmojiFilter func(Emoji) bool
+
+func LoadEmojiFromFile(s string, filter EmojiFilter) []Emoji {
+	emojis := []Emoji{}
 	currentGroup := ""
 	currentSubGroup := ""
 	for it := (emojiParser{data: s}); !it.end(); it.scan() {
@@ -42,12 +44,15 @@ func LoadEmojiFromFile(s string) []Emoji {
 			e.Group = currentGroup
 			e.SubGroup = currentSubGroup
 			// TODO filterig here
-			emoji = append(emoji, e)
+			if filter(e) {
+				emojis = append(emojis, e)
+			}
 		} else {
-			log.Printf("Failed to handle: %s", strconv.Quote(it.line))
+			_ = "ignore this branch, no need to print failed parsing, input won't change"
+			// log.Printf("Failed to handle: %s", strconv.Quote(it.line))
 		}
 	}
-	return emoji
+	return emojis
 }
 
 type emojiParser struct {
