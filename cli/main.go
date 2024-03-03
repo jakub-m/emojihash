@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"emojihash/emoji"
+	"emojihash/filter"
 	"flag"
 	"fmt"
 	"hash/fnv"
@@ -23,7 +25,7 @@ func mainerr() error {
 	} else {
 		log.SetOutput(io.Discard)
 	}
-	emojis := LoadEmojiFromFile(emojiFile, UseAll)
+	emojis := emoji.LoadEmojiFromFile(emojiFile, filter.UseAll)
 	if opts.listGroups {
 		printedGroups := make(map[string]bool)
 		for _, e := range emojis {
