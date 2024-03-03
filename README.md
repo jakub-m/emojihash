@@ -12,7 +12,7 @@ To plant this to zsh use:
 
 ```zsh
 function __prompt_emoji {
-	echo "$PWD" | ~/Private/Coding/emojihash/bin/emojihash -s $(date +%Y%m%d)
+	echo "$PWD" | ~/bin/emojihash -s $(date +%Y%m%d)
 }
 
 function __prompt_dir {
