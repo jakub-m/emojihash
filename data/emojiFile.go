@@ -1,6 +1,6 @@
-package main
+package data
 
 import _ "embed"
 
 //go:embed emoji-test.txt
-var emojiFile string
+var EmojiFile string
