@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"emojihash/data"
+	"emojihash/emoji"
 	"emojihash/filter"
 	"emojihash/loader"
 	"flag"
@@ -51,6 +52,25 @@ func mainerr() error {
 			printedGroups[s] = true
 		}
 		return nil
+	} else if opts.listEmojisCompact {
+		type group [2]string
+		groupList := []group{}
+		groupMap := make(map[group][]emoji.Emoji)
+		for _, e := range emojis {
+			eg := group([]string{e.Group, e.SubGroup})
+			if _, ok := groupMap[eg]; !ok {
+				groupMap[eg] = []emoji.Emoji{}
+				groupList = append(groupList, eg)
+			}
+			groupMap[eg] = append(groupMap[eg], e)
+		}
+		for _, g := range groupList {
+			fmt.Printf("%s\t%s\t", g[0], g[1])
+			for _, e := range groupMap[g] {
+				fmt.Printf("%s\U0000200D", e.Character)
+			}
+			fmt.Printf("\n")
+		}
 	} else if opts.listEmojis {
 		for _, e := range emojis {
 			fmt.Println(e)
@@ -73,6 +93,7 @@ func mainerr() error {
 type options struct {
 	listGroups        bool
 	listEmojis        bool
+	listEmojisCompact bool
 	debug             bool
 	seed              string
 	groupFilterString string
@@ -83,7 +104,9 @@ func parseOptions() options {
 	flag.BoolVar(&o.listGroups, "lg", false, "")
 	flag.BoolVar(&o.listGroups, "list-groups", false, "List groups of emojis. Those groups can be later used to configure which groups are used")
 	flag.BoolVar(&o.listEmojis, "l", false, "")
-	flag.BoolVar(&o.listEmojis, "list", false, "list emojis")
+	flag.BoolVar(&o.listEmojis, "list", false, "List emojis")
+	flag.BoolVar(&o.listEmojisCompact, "lc", false, "")
+	flag.BoolVar(&o.listEmojisCompact, "list-compact", false, "List emojis in a compact way")
 	flag.BoolVar(&o.debug, "d", false, "Debug mode")
 	flag.StringVar(&o.seed, "s", "", "Additional seed. This string is concatenated to every input string before hashing.")
 	flag.StringVar(&o.groupFilterString, "g", "", `Filter groups. The syntax is: "alphanum,~flags". "~" means that the group or subgroup should not be included. The order does not matter.`)
