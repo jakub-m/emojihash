@@ -67,7 +67,7 @@ func mainerr() error {
 		for _, g := range groupList {
 			fmt.Printf("%s\t%s\t", g[0], g[1])
 			for _, e := range groupMap[g] {
-				fmt.Printf("%s\U0000200D", e.Character)
+				fmt.Printf("\t%s", e.Character)
 			}
 			fmt.Printf("\n")
 		}
@@ -101,15 +101,19 @@ type options struct {
 
 func parseOptions() options {
 	var o options
-	flag.BoolVar(&o.listGroups, "lg", false, "")
+	flag.BoolVar(&o.listGroups, "lg", false, "alias list-groups")
 	flag.BoolVar(&o.listGroups, "list-groups", false, "List groups of emojis. Those groups can be later used to configure which groups are used")
-	flag.BoolVar(&o.listEmojis, "l", false, "")
+	flag.BoolVar(&o.listEmojis, "l", false, "alias list")
 	flag.BoolVar(&o.listEmojis, "list", false, "List emojis")
-	flag.BoolVar(&o.listEmojisCompact, "lc", false, "")
+	flag.BoolVar(&o.listEmojisCompact, "lc", false, "alias list-compact")
 	flag.BoolVar(&o.listEmojisCompact, "list-compact", false, "List emojis in a compact way")
 	flag.BoolVar(&o.debug, "d", false, "Debug mode")
 	flag.StringVar(&o.seed, "s", "", "Additional seed. This string is concatenated to every input string before hashing.")
 	flag.StringVar(&o.groupFilterString, "g", "", `Filter groups. The syntax is: "alphanum,~flags". "~" means that the group or subgroup should not be included. The order does not matter.`)
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Hash input to an emoji.\n\n")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	return o
 }
