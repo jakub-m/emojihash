@@ -14,7 +14,7 @@ type Emoji struct {
 }
 
 func (e Emoji) String() string {
-	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", e.Group, e.SubGroup, e.Character, e.Description, formatCharacter(e.Runes))
+	return fmt.Sprintf("%s\t%s\t%s\t%s\t%s", e.Character, e.Group, e.SubGroup, e.Description, formatCharacter(e.Runes))
 }
 
 func formatCharacter(rr []rune) string {

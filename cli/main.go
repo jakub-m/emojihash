@@ -81,7 +81,11 @@ func mainerr() error {
 			h := int(hash(scanner.Text() + opts.seed))
 			selected := emojis[h%len(emojis)]
 			log.Println(selected)
-			fmt.Println(selected.Character)
+			if opts.verbose {
+				fmt.Println(selected)
+			} else {
+				fmt.Println(selected.Character)
+			}
 		}
 		if scanner.Err() != nil {
 			return scanner.Err()
@@ -97,6 +101,7 @@ type options struct {
 	debug             bool
 	seed              string
 	groupFilterString string
+	verbose           bool
 }
 
 func parseOptions() options {
@@ -110,6 +115,7 @@ func parseOptions() options {
 	flag.BoolVar(&o.debug, "d", false, "Debug mode")
 	flag.StringVar(&o.seed, "s", "", "Additional seed. This string is concatenated to every input string before hashing.")
 	flag.StringVar(&o.groupFilterString, "g", "", `Filter groups. The syntax is: "alphanum,~flags". "~" means that the group or subgroup should not be included. The order does not matter.`)
+	flag.BoolVar(&o.verbose, "v", false, "Verbose output when hashing.")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Hash input to an emoji.\n\n")
 		flag.PrintDefaults()
